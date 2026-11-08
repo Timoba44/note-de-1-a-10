@@ -21,6 +21,24 @@ input,select{background:#101d43;border:1px solid #5873b5;color:#fff;border-radiu
 .final-celebration{overflow:hidden;border-color:#e7bd65;box-shadow:0 0 0 1px #ffd66b55,0 15px 55px #050b2380}.final-celebration:before{content:'✦   ✧   ✦   ✧   ✦';display:block;color:#ffdb74;font-size:1.65rem;letter-spacing:.5rem;text-align:center;animation:glimmer 1.6s ease-in-out 3 alternate}@keyframes glimmer{from{opacity:.5;transform:translateY(-4px)}to{opacity:1;transform:translateY(3px)}}
 @media(max-width:380px){.panel{padding:18px}.game-mode .panel{padding:20px 16px}.grid{gap:5px}.grid button{padding:11px 0;min-height:53px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+
+/* V11 : palette Quiz Party plus vive, sans encombrer l'écran */
+body{background:radial-gradient(ellipse 70% 40% at 0% 0%,#2e4fa0 0%,transparent 80%),radial-gradient(ellipse 58% 40% at 100% 10%,#612e87 0%,transparent 82%),radial-gradient(ellipse 80% 48% at 90% 95%,#116d85 0%,transparent 80%),linear-gradient(150deg,#09122e,#17254b 60%,#101836)}
+.panel{border-color:#6079c6;box-shadow:0 15px 42px #050b246b,inset 0 1px #ffffff25}
+.panel:before{content:'';position:absolute;top:0;left:22px;right:22px;height:3px;border-radius:0 0 8px 8px;background:linear-gradient(90deg,#53e0d1,#ffe078,#ff739e,#7b8fff);opacity:.9}
+.tag,.question-meta{color:#7deee4}
+.game-mode .panel>.tag{background:linear-gradient(120deg,#214f80,#3a3a8e);border-color:#6289e0;color:#a7f8ee}
+.grid button:nth-child(5n+1){background:linear-gradient(145deg,#2a9eaf,#2267ae);border-color:#5ed6e1}
+.grid button:nth-child(5n+2){background:linear-gradient(145deg,#5576e9,#3d52bb);border-color:#94a8ff}
+.grid button:nth-child(5n+3){background:linear-gradient(145deg,#8464d5,#5e47b3);border-color:#b59bff}
+.grid button:nth-child(5n+4){background:linear-gradient(145deg,#c267a6,#934b96);border-color:#ee9bd3}
+.grid button:nth-child(5n){background:linear-gradient(145deg,#d8835e,#b95e65);border-color:#ffb69c}
+.grid button:disabled{background:#29375b!important;color:#8190b5;border-color:#3b4c74!important}
+.option-card{background:linear-gradient(130deg,#20396f,#273063)}
+.score-toggle{background:linear-gradient(135deg,#2a8da7,#3b55b0);border-color:#7eddea}
+.question-actions>button:first-child:not(.secondary):not(.correct-btn):not(.wrong-btn){background:linear-gradient(135deg,#ffe992,#ffc24c);color:#34233b}
+.final-celebration{background:linear-gradient(135deg,#303f85,#513c85 55%,#174d75)}
+@media(prefers-reduced-motion:reduce){.panel:before{animation:none}}
 </style></head><body><button id="scoreToggle" class="score-toggle" onclick="toggleScores()" hidden aria-label="Afficher le classement">☰ Classement</button><div id="scoreOverlay" class="score-overlay" onclick="toggleScores(false)" hidden></div><aside id="scoreDrawer" class="score-drawer" role="dialog" aria-modal="true" aria-label="Classement" hidden></aside><main><header><button type="button" class="secondary" onclick="home()">⌂ Accueil</button><h1>🎯 Note-toi de 1 à 10</h1><p>Un thème commun, une note unique par joueur, des questions à l’oral.</p></header><div id="app"></div></main><script>
 const bank={ratings:[
 {theme:'Bricolage',q:['Quel outil sert à enfoncer un clou ?','Comment appelle-t-on l’outil servant à serrer une vis ?','Quel instrument vérifie qu’une surface est horizontale ?','Quel matériau obtient-on en mélangeant ciment, sable et eau ?','Quel type de cheville utilise-t-on généralement pour une cloison creuse en plaque de plâtre ?','Quel est le rôle d’un disjoncteur dans une installation électrique ?','Que signifie le marquage IP44 sur un appareil électrique ?','Dans une installation domestique française récente, quelle couleur est réservée au conducteur de protection (terre) ?','Quelle est la différence entre un circuit électrique en série et un circuit en parallèle ?','Pourquoi doit-on vérifier l’absence de tension avec un appareil adapté avant de travailler sur un circuit ?'],a:['Marteau','Tournevis','Niveau à bulle','Mortier','Cheville pour corps creux, par exemple Molly','Couper le courant en cas de surcharge ou de court-circuit','Protection contre les corps solides de plus de 1 mm et les projections d’eau','Vert et jaune','En série, un seul chemin pour le courant ; en parallèle, plusieurs branches','Parce qu’une coupure apparente ne garantit pas qu’un conducteur est hors tension']},
@@ -36,6 +54,7 @@ const mcq={'Géographie':{7:['Sydney','Melbourne','Perth']},'Cuisine':{6:['Caram
 function choicesFor(topic,n){let wrong=mcq[topic.theme]?.[n];if(!wrong)return null;let answer=topic.a[n-1];return shuffle([answer,...wrong]).map(x=>({text:x,correct:x===answer}));}
 let S={},timer=null;
 const app=document.getElementById('app');
+const LAST_PLAYERS='note10_last_players_v11';
 const KEY='note10_save_v4',HISTORY='note10_used_topics_v4',PROFILES='note10_profiles_v4',SEEN='note10_seen_questions_v9';
 // Supprimer les anciens profils de test, sans effacer une partie en cours.
 try{localStorage.removeItem(PROFILES)}catch(e){}
@@ -49,7 +68,23 @@ function seenBy(name,theme,n,idx=0){return read(SEEN,[]).includes(questionId(the
 function recordSeen(name,theme,n,idx=0){const key=questionId(theme,n,idx),seen=read(SEEN,[]);if(!seen.includes(key)){seen.push(key);write(SEEN,seen)}}
 function variantsFor(theme,n){let t=bank.ratings.find(x=>x.theme===theme);if(!t)return [];return [{q:t.q[n-1],a:t.a[n-1],idx:0},...(variants[theme]?.[n-1]?[{...variants[theme][n-1],idx:1}]:[])]}
 function availableQuestion(name,theme,n){const pool=variantsFor(theme,n);let unseen=pool.filter(x=>!seenBy(name,theme,n,x.idx));return shuffle(unseen.length?unseen:pool)[0]}
-function sound(ok){if(!S.sounds)return;try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const c=new C(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=ok?660:230;g.gain.setValueAtTime(.055,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.18);o.start();o.stop(c.currentTime+.19);setTimeout(()=>c.close(),350)}catch(e){}}
+let audioCtx=null;
+function sound(ok){
+ if(!S.sounds)return;
+ try{
+  const C=window.AudioContext||window.webkitAudioContext;if(!C)return;
+  if(!audioCtx)audioCtx=new C();const c=audioCtx;if(c.state==='suspended')c.resume();
+  const t=c.currentTime+.015;
+  const notes=ok?[[523.25,0,.17],[659.25,.15,.17],[783.99,.30,.20],[1046.5,.48,.34]]:[[392,0,.19],[329.63,.18,.21],[261.63,.38,.27],[196,.63,.31]];
+  notes.forEach(([hz,delay,duration],i)=>{
+   const osc=c.createOscillator(),gain=c.createGain();osc.type=ok?'sine':'triangle';osc.frequency.setValueAtTime(hz,t+delay);
+   if(!ok)osc.frequency.exponentialRampToValueAtTime(hz*.92,t+delay+duration);
+   gain.gain.setValueAtTime(.0001,t+delay);gain.gain.exponentialRampToValueAtTime(ok?.10:.065,t+delay+.025);
+   gain.gain.exponentialRampToValueAtTime(.0001,t+delay+duration);
+   osc.connect(gain);gain.connect(c.destination);osc.start(t+delay);osc.stop(t+delay+duration+.02);
+  });
+ }catch(e){}
+}
 function profileList(){return ''}
 function clearSave(){try{localStorage.removeItem(KEY)}catch(e){}}
 function save(){write(KEY,S)}
@@ -58,16 +93,17 @@ function pickTheme(){let used=read(HISTORY,[]);if(!Array.isArray(used))used=[];c
 function stop(){if(timer)clearInterval(timer);timer=null}
 function home(){gameChrome(false);stop();const saved=read(KEY,null);app.innerHTML=`<div class="panel"><h2>Note-toi de 1 à 10</h2><p>Un thème commun, une note unique par joueur, et des questions à l’oral. Bonne réponse : autant de points que la note choisie.</p>${validSave(saved)?`<button onclick="resume()">▶ Reprendre la partie (thème ${saved.round}/${saved.limit})</button> <button class="secondary" onclick="newGame()">Nouvelle partie</button>`:`<button onclick="setup()">Créer une partie</button>`}</div>`}
 function newGame(){if(validSave(read(KEY,null))&&!confirm('Abandonner la partie en cours et repartir de zéro ?'))return;clearSave();setup()}
+function readLastPlayers(){const list=read(LAST_PLAYERS,[]);return Array.isArray(list)?list.filter(x=>typeof x==='string'&&x.trim()).slice(0,10):[]}
 let W={limit:10,names:[],jokers:false,sounds:true};
-function setup(){gameChrome(false);stop();W={limit:10,names:[],jokers:false,sounds:true};wizardRounds()}
+function setup(){gameChrome(false);stop();W={limit:10,names:readLastPlayers(),jokers:false,sounds:true};wizardRounds()}
 function wizardRounds(){app.innerHTML=`<div class="panel"><span class="tag">Étape 1 sur 3</span><h2>Combien de manches ?</h2><p>Choisis la durée de la partie.</p><div class="row"><button onclick="setRounds(5)">5 manches</button><button onclick="setRounds(10)">10 manches</button><button onclick="setRounds(20)">20 manches</button></div><button class="secondary" onclick="home()">Retour à l’accueil</button></div>`}
 function setRounds(n){W.limit=n;wizardPlayers()}
-function wizardPlayers(){app.innerHTML=`<div class="panel"><span class="tag">Étape 2 sur 3</span><h2>Ajouter les joueurs</h2><p>Entre les prénoms <b>un par un</b> (2 à 10 joueurs).</p><label for="playerName">Prénom du joueur ${W.names.length+1}</label><input id="playerName" maxlength="35" placeholder="Ex. Lucas" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();addPlayer()}"><button onclick="addPlayer()" ${W.names.length>=10?'disabled':''}>+ Ajouter ce joueur</button><p><b>Joueurs inscrits (${W.names.length}/10)</b></p>${W.names.length?`<div>${W.names.map((name,i)=>`<div class="score"><span>${i+1}. ${esc(name)}</span><button class="secondary" onclick="removePlayer(${i})" aria-label="Retirer ${esc(name)}">Retirer</button></div>`).join('')}</div>`:'<p class="muted">Aucun joueur ajouté pour le moment.</p>'}<div class="row"><button onclick="wizardOptions()" ${W.names.length<2?'disabled':''}>Continuer →</button><button class="secondary" onclick="wizardRounds()">← Retour</button></div></div>`;if(W.names.length<10)document.getElementById('playerName').focus()}
+function wizardPlayers(){app.innerHTML=`<div class="panel"><span class="tag">Étape 2 sur 3</span><h2>Les joueurs</h2><p>${W.names.length?'Les joueurs de la dernière partie sont déjà ajoutés. Tu peux en retirer ou en ajouter.':'Ajoute les joueurs un par un (2 à 10).'}</p><label for="playerName">Prénom du joueur ${W.names.length+1}</label><input id="playerName" maxlength="35" placeholder="Ex. Lucas" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();addPlayer()}"><button onclick="addPlayer()" ${W.names.length>=10?'disabled':''}>+ Ajouter ce joueur</button><p><b>Joueurs inscrits (${W.names.length}/10)</b></p>${W.names.length?`<div>${W.names.map((name,i)=>`<div class="score"><span>${i+1}. ${esc(name)}</span><button class="secondary" onclick="removePlayer(${i})" aria-label="Retirer ${esc(name)}">Retirer</button></div>`).join('')}</div>`:'<p class="muted">Aucun joueur ajouté pour le moment.</p>'}<div class="row"><button onclick="wizardOptions()" ${W.names.length<2?'disabled':''}>Continuer →</button><button class="secondary" onclick="wizardRounds()">← Retour</button></div></div>`;if(W.names.length<10)document.getElementById('playerName').focus()}
 function addPlayer(){if(W.names.length>=10)return;let input=document.getElementById('playerName'),name=input.value.trim();if(!name){alert('Entre un prénom.');input.focus();return}if(W.names.some(x=>x.toLocaleLowerCase('fr')===name.toLocaleLowerCase('fr'))){alert('Ce prénom est déjà inscrit. Utilise un surnom différent.');input.focus();return}W.names.push(name);wizardPlayers()}
 function removePlayer(i){W.names.splice(i,1);wizardPlayers()}
 function wizardOptions(){if(W.names.length<2||W.names.length>10){wizardPlayers();return}app.innerHTML=`<div class="panel"><span class="tag">Étape 3 sur 3</span><h2>Options de la partie</h2><p><b>${W.limit} manches</b> · ${W.names.length} joueurs : ${W.names.map(esc).join(', ')}</p><div class="notice option-card"><label class="switch-row" for="jokers"><span class="switch-text"><strong>Activer les jokers</strong></span><input class="switch-input" type="checkbox" id="jokers" ${W.jokers?'checked':''}><span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span></label><p class="muted">${W.limit===20?'Chaque joueur dispose d’un joker Deuxième chance et d’un joker Changement de question pour toute la partie.':'Chaque joueur peut utiliser un seul joker au choix pendant toute la partie.'}</p></div><div class="notice option-card"><label class="switch-row" for="sounds"><span class="switch-text"><strong>Activer les sons</strong></span><input class="switch-input" type="checkbox" id="sounds" ${W.sounds?'checked':''}><span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span></label></div><p class="muted">La partie sera sauvegardée automatiquement sur cet appareil.</p><div class="row"><button onclick="start()">Commencer la partie</button><button class="secondary" onclick="backToPlayers()">← Retour</button></div></div>`}
 function backToPlayers(){W.jokers=document.getElementById('jokers').checked;W.sounds=document.getElementById('sounds').checked;wizardPlayers()}
-function start(){const names=[...W.names],n=W.limit;if(names.length<2||names.length>10)return wizardPlayers();const profileIds=Object.fromEntries(names.map(name=>[name,createProfile(name).id]));S={type:'ratings',round:0,names,profileIds,limit:n,jokers:document.getElementById('jokers').checked,sounds:document.getElementById('sounds').checked,jokerUsed:Object.fromEntries(names.map(x=>[x,[]])),scores:Object.fromEntries(names.map(x=>[x,0])),order:[],step:0,picks:{}};next()}
+function start(){const names=[...W.names],n=W.limit;if(names.length<2||names.length>10)return wizardPlayers();write(LAST_PLAYERS,names);const profileIds=Object.fromEntries(names.map(name=>[name,createProfile(name).id]));S={type:'ratings',round:0,names,profileIds,limit:n,jokers:document.getElementById('jokers').checked,sounds:document.getElementById('sounds').checked,jokerUsed:Object.fromEntries(names.map(x=>[x,[]])),scores:Object.fromEntries(names.map(x=>[x,0])),order:[],step:0,picks:{}};next()}
 function gameChrome(active){document.body.classList.toggle('game-mode',!!active);document.getElementById('scoreToggle').hidden=!active;if(!active)toggleScores(false)}
 function toggleScores(force){const drawer=document.getElementById('scoreDrawer'),overlay=document.getElementById('scoreOverlay');const show=typeof force==='boolean'?force:drawer.hidden;drawer.hidden=!show;overlay.hidden=!show;if(show){drawer.innerHTML=`<button class="secondary" onclick="toggleScores(false)" aria-label="Fermer le classement">✕ Fermer</button><h2>Classement</h2>${[...S.names].sort((a,b)=>S.scores[b]-S.scores[a]).map((n,i)=>`<div class="score"><span>${i+1}. ${esc(n)}</span><b>${S.scores[n]} pts</b></div>`).join('')}${S.lastValidation&&S.stage==='question'?'<button class="secondary" onclick="toggleScores(false);undoLast()">↶ Corriger la dernière validation</button>':''}`}}
 function scores(){return '<div class="panel"><b>Scores</b>'+S.names.map(n=>`<div class="score"><span>${esc(n)}</span><b>${S.scores[n]} pts</b></div>`).join('')+'</div>'}
